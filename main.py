@@ -81,7 +81,7 @@ class Ellipse:
 	def find_points(self, n=50) -> list or None:
 		self.points = []
 
-		print(f'Circumference: {self.find_circumference()}')
+		self.find_circumference()
 
 		nextpoint:int = 0
 		run:float = 0.0
@@ -108,6 +108,87 @@ class Ellipse:
 			pygame.draw.circle(screen, (0,255,0), (point[0] + self.pos[0], point[1] + self.pos[1]), 1)
 
 
+class Polygon:
+	def __init__(self, points:list[tuple[int or float],tuple[int or float],tuple[int or float], tuple[int or float]], filled:bool=False, outline=None):
+		self.points = points
+		self.filled = filled
+		self.outline = outline
+
+class Rectangle:
+	def __init__(self, x, y, width, height, filled=False, outline_width=1):
+		self.x = x
+		self.y = y
+		self.width = width
+		self.height = height
+		self.filled = filled
+		self.outline_width = outline_width
+		self.top = bresenham(self.x, self.y, self.x + self.width, self.y)
+		self.right = bresenham(self.x + self.width, self.y, self.x + self.width, self.y + self.height)
+		self.left = bresenham(self.x, self.y + self.height, self.x, self.y)
+		self.bottom = bresenham(self.x + self.width, self.y + self.height, self.x, self.y + self.height)
+		self.fill = []
+		for x in range(self.width):
+			self.fill.append(bresenham(self.x + x, self.y, self.x + x, self.y + self.height))
+
+	def draw(self, surface, color:tuple[int or float, int or float, int or float]):
+		#top left to top right
+		#pygame.draw.line(surface, color, (self.x, self.y), (self.x + self.width, self.y), self.outline_width)
+		#top right to bottom right
+		#pygame.draw.line(surface, color, (self.x + self.width, self.y), (self.x + self.width, self.y + self.height), self.outline_width)
+		#bottom right to bottom left
+		#pygame.draw.line(surface, color, (self.x + self.width, self.y + self.height), (self.x, self.y + self.height),
+		#				 self.outline_width)
+		#bottom left to top left
+		#pygame.draw.line(surface, color, (self.x, self.y + self.height), (self.x, self.y),
+		#				 self.outline_width)
+
+		for point in self.top :
+			surface.set_at(point, color)
+
+		for point in self.right:
+			surface.set_at(point, color)
+
+		for point in self.left:
+			surface.set_at(point, color)
+
+		for point in self.bottom:
+			surface.set_at(point, color)
+
+		if self.filled:
+			for row in self.fill:
+				for point in row:
+					surface.set_at(point, color)
+
+
+
+def bresenham(x1, y1, x2, y2):
+	"""
+	Implements Bresenham's Line Algorithm.
+	Returns a list of all points on the line as (x, y) tuples.
+	"""
+	points = []
+
+	dx = abs(x2 - x1)
+	dy = abs(y2 - y1)
+	sx = 1 if x1 < x2 else -1
+	sy = 1 if y1 < y2 else -1
+	err = dx - dy
+
+	while True:
+		points.append((x1, y1))
+
+		if x1 == x2 and y1 == y2:
+			break
+
+		e2 = 2 * err
+		if e2 > -dy:
+			err -= dy
+			x1 += sx
+		if e2 < dx:
+			err += dx
+			y1 += sy
+
+	return points
 
 """
 calculates the distance from the center of the ellipse to the point on the ellipse at the given theta plus π/2
@@ -124,9 +205,11 @@ test_circle:Circle = Circle(250, 250, 100, filled=False,outline=[2,(255,0,0)])
 
 clock:pygame.time.Clock = pygame.time.Clock()
 
-ellipse:Ellipse = Ellipse((250, 250), 100, 200, filled=False)
+ellipse:Ellipse = Ellipse((250, 250), 1000, 200, filled=False)
 
 ellipse.find_points(n=50)
+
+rectangle:Rectangle = Rectangle(250, 100, 200, 200, filled=True, outline_width=1)
 
 while running:
 	screen.fill((0, 0, 0))
@@ -137,5 +220,6 @@ while running:
 	ellipse.draw()
 
 	test_circle.draw()
+	rectangle.draw(screen, (255,255,255))
 	pygame.display.flip()
 	clock.tick(30)
