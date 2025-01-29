@@ -1,6 +1,7 @@
 import pygame
 import numpy as np
 import math
+from itertools import product
 
 screen = pygame.display.set_mode((800, 600))
 
@@ -19,9 +20,10 @@ class Circle:
 		self.points:list = []
 		self.filled:bool = filled
 		self.generate_points()
-		self.points:list = list(set(self.points))
+		self.points_in_circle:list = list(points_in_circle(self.radius, (self.x, self.y)))
 
 		self.outline = outline
+
 
 	def draw(self):
 		if self.outline:
@@ -36,9 +38,6 @@ class Circle:
 									self.color
 							)
 
-					if self.filled:
-						pygame.draw.line(screen, self.color, (self.x,self.y), point)
-
 		else:
 			for point in self.points:
 				if not point[0] > screen.get_width() and not point[0] < 0 and not point[1] < 0 and not point[1] > screen.get_height():
@@ -46,6 +45,9 @@ class Circle:
 
 					if self.filled:
 						pygame.draw.line(screen, self.color, (self.x, self.y), point)
+		if self.filled:
+			for point in self.points_in_circle:
+				screen.set_at(point, self.color)
 
 	def generate_points(self):
 		self.points:list = []
@@ -201,13 +203,24 @@ def compute_dpt(r1:float or int, r2:float or int, theta:float or int) -> float:
 
 	return dp
 
-test_circle:Circle = Circle(250, 250, 100, filled=False,outline=[2,(255,0,0)])
+
+def points_in_circle(radius, offset=(0,0)):
+	for x, y in product(range(int(radius) + 1), repeat=2):
+		if x**2 + y**2 <= radius**2:
+			yield from {
+				(x + offset[0], y + offset[1]),
+				(x + offset[0], -y + offset[1]),
+				(-x + offset[0], y + offset[1]),
+				(-x + offset[0], -y + offset[1])
+			}
+
+test_circle:Circle = Circle(250, 250, 100, filled=True,outline=[2,(255,0,0)])
 
 clock:pygame.time.Clock = pygame.time.Clock()
 
-ellipse:Ellipse = Ellipse((250, 250), 1000, 200, filled=False)
+ellipse:Ellipse = Ellipse((250, 250), 75, 20, filled=False)
 
-ellipse.find_points(n=50)
+ellipse.find_points(n=170)
 
 rectangle:Rectangle = Rectangle(250, 100, 200, 200, filled=True, outline_width=1)
 
@@ -217,9 +230,10 @@ while running:
 		if event.type == pygame.QUIT:
 			running = False
 
-	ellipse.draw()
+
 
 	test_circle.draw()
 	rectangle.draw(screen, (255,255,255))
+	ellipse.draw()
 	pygame.display.flip()
 	clock.tick(30)
